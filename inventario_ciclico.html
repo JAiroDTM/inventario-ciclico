@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inventario Cíclico</title>
+<script src="https://unpkg.com/html5-qrcode"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+body{font-family:Arial,sans-serif;max-width:900px;margin:auto;padding:15px}
+input,button{padding:10px;margin:5px;width:100%}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th,td{border:1px solid #ccc;padding:6px}
+#reader{width:100%}
+</style>
+</head>
+<body>
+<h2>Inventario Cíclico</h2>
+
+<label>Ubicación</label>
+<input id="ubicacion" placeholder="Ej: A01-01">
+
+<label>Código</label>
+<input id="codigo" placeholder="Escanea o escribe manualmente">
+
+<button onclick="iniciarScanner()">📷 Escanear Código</button>
+<div id="reader"></div>
+
+<label>Cantidad</label>
+<input id="cantidad" type="number" min="0">
+
+<button onclick="agregar()">➕ Agregar</button>
+<button onclick="eliminarUltimo()">🗑 Eliminar último</button>
+<button onclick="exportarExcel()">📊 Exportar Excel</button>
+
+<h3>Registros: <span id="contador">0</span></h3>
+
+<table>
+<thead>
+<tr>
+<th>Fecha</th><th>Hora</th><th>Ubicación</th><th>Código</th><th>Cantidad</th>
+</tr>
+</thead>
+<tbody id="tabla"></tbody>
+</table>
+
+<script>
+let registros=[];
+let scannerActivo=false;
+
+function iniciarScanner(){
+ if(scannerActivo) return;
+ scannerActivo=true;
+
+ const qr=new Html5Qrcode("reader");
+ qr.start(
+   { facingMode: "environment" },
+   { fps:10, qrbox:250 },
+   (decodedText)=>{
+      document.getElementById("codigo").value=decodedText;
+      qr.stop().then(()=>{
+         document.getElementById("reader").innerHTML="";
+         scannerActivo=false;
+      });
+   }
+ );
+}
+
+function agregar(){
+ const ubicacion=document.getElementById("ubicacion").value.trim();
+ const codigo=document.getElementById("codigo").value.trim();
+ const cantidad=document.getElementById("cantidad").value.trim();
+
+ if(!ubicacion || !codigo || !cantidad){
+   alert("Completa todos los campos");
+   return;
+ }
+
+ const duplicado=registros.find(r=>r.ubicacion===ubicacion && r.codigo===codigo);
+ if(duplicado){
+   alert("Ese producto ya fue contado en esa ubicación");
+   return;
+ }
+
+ const ahora=new Date();
+
+ const reg={
+   fecha:ahora.toLocaleDateString(),
+   hora:ahora.toLocaleTimeString(),
+   ubicacion,
+   codigo,
+   cantidad
+ };
+
+ registros.push(reg);
+
+ const tr=document.createElement("tr");
+ tr.innerHTML=`
+ <td>${reg.fecha}</td>
+ <td>${reg.hora}</td>
+ <td>${reg.ubicacion}</td>
+ <td>${reg.codigo}</td>
+ <td>${reg.cantidad}</td>`;
+
+ document.getElementById("tabla").appendChild(tr);
+ document.getElementById("contador").innerText=registros.length;
+
+ document.getElementById("codigo").value="";
+ document.getElementById("cantidad").value="";
+}
+
+function eliminarUltimo(){
+ if(registros.length===0)return;
+ registros.pop();
+ const tabla=document.getElementById("tabla");
+ tabla.removeChild(tabla.lastElementChild);
+ document.getElementById("contador").innerText=registros.length;
+}
+
+function exportarExcel(){
+ const ws=XLSX.utils.json_to_sheet(registros);
+ const wb=XLSX.utils.book_new();
+ XLSX.utils.book_append_sheet(wb,ws,"Inventario");
+
+ const fecha=new Date().toISOString().slice(0,10);
+ XLSX.writeFile(wb,`inventario_${fecha}.xlsx`);
+}
+</script>
+</body>
+</html>

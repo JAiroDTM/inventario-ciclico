@@ -21,13 +21,13 @@ th,td{border:1px solid #ccc;padding:6px}
 <input id="ubicacion" placeholder="Ej: A01-01">
 
 <label>Código</label>
-<input id="codigo" placeholder="Escanea o escribe manualmente">
+<input id="codigo" type="number" inputmode="numeric" placeholder="Escanea o escribe manualmente">
 
 <button onclick="iniciarScanner()">📷 Escanear Código</button>
 <div id="reader"></div>
 
 <label>Cantidad</label>
-<input id="cantidad" type="number" min="0">
+<input id="cantidad" type="number" min="0" inputmode="numeric">
 
 <button onclick="agregar()">➕ Agregar</button>
 <button onclick="eliminarUltimo()">🗑 Eliminar último</button>
